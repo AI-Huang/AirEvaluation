@@ -1,12 +1,11 @@
 # data
 data/
-
 # ckpts
 ckpts*/
-
 # logs
 logs/
-
+# math
+math_fn/
 # report and results
 report/
 results/

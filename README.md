@@ -1,2 +1,19 @@
-# AirEvaluation
-GreenEyes: An Air Quality Level Fitting Model based on WaveNet
+## AirEvaluation
+
+AirEvaluation，GreenEyes 空气监控和阈值判断及其预测系统。
+
+### Training
+
+Run:
+
+```bash
+python train.py --stride=10
+```
+
+### Evaluation
+
+Run:
+
+```bash
+python evaluate.py --stride=10
+```
