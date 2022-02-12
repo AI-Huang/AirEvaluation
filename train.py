@@ -49,9 +49,14 @@ def training_args():
 
     # Model parameters
     parser.add_argument('--model_type', type=str, dest='model_type',
-                        action='store', default="WaveNet_LSTM", help='tmp, manually set model type, for model data save path configuration.')
-
-    valid_attention = ["official", "MyAttention", "BahdanauAttention"]
+                        action='store', default="WaveNet_LSTM", choices=["WaveNet_LSTM"], help='tmp, manually set model type, for model data save path configuration.')
+    # Model parameters and ablition study
+    parser.add_argument('--activation', type=str, dest='activation',
+                        action='store', default=None, help="""activation, if not None, it should be activation type such as 'relu'.""")
+    parser.add_argument('--batch_norm', type=string2bool, dest='batch_norm',
+                        action='store', default="False", help=""".""")
+    parser.add_argument('--attention_type', type=str, dest='attention_type',
+                        action='store', default="MyAttention", choices=["official", "MyAttention", "BahdanauAttention"], help="""attention_type, "custom" or "official".""")
 
     # Data parameters
     parser.add_argument('--data_type', type=str, dest='data_type',
@@ -74,14 +79,6 @@ def training_args():
     parser.add_argument('--validation_split', type=float,
                         dest='validation_split', action='store', default=0.2,
                         help='validation_split, the split of the validation data.')
-
-    # Model parameters
-    parser.add_argument('--activation', type=str, dest='activation',
-                        action='store', default=None, help="""activation, if not None, it should be activation type such as 'relu'.""")
-
-    # TODO unused parameters
-    parser.add_argument('--attention_type', type=str, dest='attention_type',
-                        action='store', default="custom", help="""attention_type, "custom" or "official".""")
 
     # Training parameters
     parser.add_argument('--batch_size', type=int, dest='batch_size',
@@ -124,10 +121,11 @@ def main():
     validation_split = args.validation_split
 
     gpus_memory = get_gpu_memory()
-    available_gpu_indices = get_available_gpu_indices(
-        gpus_memory, required_memory=5000)  # 5000 MB
-    model_gpu = available_gpu_indices[0]
-    train_gpu = available_gpu_indices[1]
+    # available_gpu_indices = get_available_gpu_indices(
+    # gpus_memory, required_memory=5000)  # 5000 MB
+    # model_gpu = available_gpu_indices[0]
+    # train_gpu = available_gpu_indices[1]
+    model_gpu, train_gpu = 0, 0
     model_device = "/device:GPU:" + str(model_gpu)
     train_device = "/device:GPU:" + str(train_gpu)
 
@@ -183,7 +181,8 @@ def main():
     with tf.device(model_device):
         if args.model_type == "WaveNet_LSTM":
             model = WaveNet_LSTM(input_shape=(
-                args.window_size, 1), activation=args.activation)
+                args.window_size, 1), activation=args.activation, batch_norm=args.batch_norm, attention_type=args.attention_type)
+
         model.compile(
             Adam(clipvalue=1.0, lr=lr_schedule(0)),
             loss=loss,

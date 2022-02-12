@@ -13,7 +13,10 @@ from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Activation, LSTM, Conv1D, Multiply, Add, AveragePooling1D, Bidirectional, Dropout, Dense, Attention, BatchNormalization
 from tensorflow.keras.regularizers import l2
 from tensorflow.keras.optimizers import Adam, SGD
-from wavenet.keras_fn.attention_layers import MyAttention, BahdanauAttention
+try:
+    from wavenet.keras_fn.attention_layers import MyAttention, BahdanauAttention
+except:
+    from attention_layers import MyAttention, BahdanauAttention
 
 
 def wave_block(x, filters, kernel_size, n, batch_norm=False):
@@ -88,7 +91,7 @@ def wave_block_ver2020(x, filters, kernel_size, n, batch_norm=False):
     return x  # Not residual_x!
 
 
-def WaveNet_LSTM(input_shape, activation=None, batch_norm=False, attention_type="MyAttention"):
+def WaveNet_LSTM(input_shape, activation=None, batch_norm=False, attention_type="official"):
     """WaveNet_LSTM
     Inputs
         input_shape: the input must be a vector, so *input_shape* must be (dim, 1).
@@ -138,11 +141,11 @@ def WaveNet_LSTM(input_shape, activation=None, batch_norm=False, attention_type=
 
     valid_attention = ["official", "MyAttention", "BahdanauAttention"]
     assert attention_type in valid_attention
-    if attention_type == valid_attention[0]:
+    if attention_type == "official":
         x = Attention()([x, x])
-    elif attention_type == valid_attention[1]:
+    elif attention_type == "MyAttention":
         x = MyAttention(input_shape[0]//1000)(x)
-    elif attention_type == valid_attention[2]:
+    elif attention_type == "BahdanauAttention":
         x = BahdanauAttention(input_shape[0]//1000)(x)
 
     x = Dropout(0.2)(x)
@@ -156,10 +159,17 @@ def WaveNet_LSTM(input_shape, activation=None, batch_norm=False, attention_type=
 def main():
     from tensorflow.keras.utils import plot_model
 
-    test_attention_type = "BahdanauAttention"
+    test_attention_type = "official"
+    # test_attention_type = "BahdanauAttention"
+    # test_attention_type == "MyAttention"
     model = WaveNet_LSTM(input_shape=(7200, 1),
-                         activation=None, attention_type=test_attention_type)
-    plot_model(model, to_file=f"./png/WaveNet_LSTM-46.png", show_shapes=True)
+                         activation=None,
+                         batch_norm=None,
+                         attention_type=test_attention_type)
+
+    model.summary()
+
+    plot_model(model, to_file=f"./WaveNet_LSTM-test.png", show_shapes=True)
 
 
 if __name__ == "__main__":
