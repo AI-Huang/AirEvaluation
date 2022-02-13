@@ -56,7 +56,7 @@ def training_args():
     parser.add_argument('--batch_norm', type=string2bool, dest='batch_norm',
                         action='store', default="False", help=""".""")
     parser.add_argument('--attention_type', type=str, dest='attention_type',
-                        action='store', default="MyAttention", choices=["official", "MyAttention", "BahdanauAttention"], help="""attention_type, "custom" or "official".""")
+                        action='store', default="official", choices=["official", "MyAttention", "BahdanauAttention"], help="""attention_type, "custom" or "official".""")
 
     # Data parameters
     parser.add_argument('--data_type', type=str, dest='data_type',
