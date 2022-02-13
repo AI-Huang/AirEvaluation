@@ -7,6 +7,7 @@
 Tests window_sequence module.
 """
 import numpy as np
+from tqdm import tqdm
 from tensorflow.python.keras import keras_parameterized
 from tensorflow.python.platform import test
 from window_sequences import WindowSequences, MultiChannelWindowSequences
@@ -52,7 +53,6 @@ class TestWindowSequences(keras_parameterized.TestCase):
         print(f"num train batches: {len(window_sequences_train)}")
 
         print("Test getting batches...")
-        from tqdm import tqdm
         for i in tqdm(range(len(window_sequences_train))):
             batch_x, batch_y = window_sequences_train.__getitem__(i)
 
@@ -144,7 +144,6 @@ class TestMultiChannelWindowSequences(keras_parameterized.TestCase):
         print(f"Val samples: {len(window_sequence_val.multi_channel_index)}.")
 
         print("Test getting batches...")
-        from tqdm import tqdm
         for i in tqdm(range(len(window_sequences_train))):
             batch_x, batch_y = window_sequences_train.__getitem__(i)
 

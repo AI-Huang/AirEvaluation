@@ -55,42 +55,6 @@ def wave_block(x, filters, kernel_size, n, batch_norm=False):
     return x  # Not residual_x!
 
 
-def wave_block_ver2020(x, filters, kernel_size, n, batch_norm=False):
-    """WaveNet Residual Conv1D block
-    Inputs:
-        x:
-        filters:
-        kernel_size:
-        n:
-        batch_norm:
-    Return:
-    """
-    # Dilated Conv
-    dilation_rates = [2**i for i in range(n)]
-    for dilation_rate in dilation_rates:
-        residual_x = x
-        tanh_out = Conv1D(filters=filters,
-                          kernel_size=kernel_size,
-                          padding='same',
-                          activation='tanh',
-                          dilation_rate=dilation_rate,
-                          kernel_regularizer=l2(1e-4))(x)
-        sigm_out = Conv1D(filters=filters,
-                          kernel_size=kernel_size,
-                          padding='same',
-                          activation='sigmoid',
-                          dilation_rate=dilation_rate,
-                          kernel_regularizer=l2(1e-4))(x)
-        x = Multiply()([tanh_out, sigm_out])
-        x = Conv1D(1, 1)(x)  # Skip connections
-        if batch_norm:
-            x = BatchNormalization(beta_regularizer=l2(
-                1e-4), gamma_regularizer=l2(1e-4))(x)
-        x = Add()([residual_x, x])
-
-    return x  # Not residual_x!
-
-
 def WaveNet_LSTM(input_shape, activation=None, batch_norm=False, attention_type="official"):
     """WaveNet_LSTM
     Inputs
@@ -110,8 +74,8 @@ def WaveNet_LSTM(input_shape, activation=None, batch_norm=False, attention_type=
                padding='same',
                kernel_regularizer=l2(1e-4))(input_)
 
-    x = wave_block_ver2020(x, base_filters, kernel_size,
-                           wavenet_layers[0], batch_norm=batch_norm)
+    x = wave_block(x, base_filters, kernel_size,
+                   wavenet_layers[0], batch_norm=batch_norm)
     if activation:
         x = Activation(activation)(x)
     x = AveragePooling1D(10)(x)
@@ -119,8 +83,8 @@ def WaveNet_LSTM(input_shape, activation=None, batch_norm=False, attention_type=
         x = BatchNormalization(beta_regularizer=l2(
             1e-4), gamma_regularizer=l2(1e-4))(x)
 
-    x = wave_block_ver2020(x, base_filters, kernel_size,
-                           wavenet_layers[1], batch_norm=batch_norm)  # *2
+    x = wave_block(x, base_filters, kernel_size,
+                   wavenet_layers[1], batch_norm=batch_norm)  # *2
     if activation:
         x = Activation(activation)(x)
     x = AveragePooling1D(10)(x)
@@ -128,8 +92,8 @@ def WaveNet_LSTM(input_shape, activation=None, batch_norm=False, attention_type=
         x = BatchNormalization(beta_regularizer=l2(
             1e-4), gamma_regularizer=l2(1e-4))(x)
 
-    x = wave_block_ver2020(x, base_filters, kernel_size,
-                           wavenet_layers[2], batch_norm=batch_norm)  # *4
+    x = wave_block(x, base_filters, kernel_size,
+                   wavenet_layers[2], batch_norm=batch_norm)  # *4
     if activation:
         x = Activation(activation)(x)
     x = AveragePooling1D(10)(x)

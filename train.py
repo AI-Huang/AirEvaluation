@@ -97,6 +97,10 @@ def training_args():
                         action='store', default=None, help='train_gpu, the number of the train_gpu used for experiment.')
 
     # Other parameters
+    # Log parameter
+    parser.add_argument('--log_prefix', type=str, dest='log_prefix',
+                        action='store', default=os.path.expanduser(os.path.join(
+                            "~", "Documents", "DeepLearningData", "AirMonitor")), help='log_prefix, .')
     parser.add_argument('--date_time', type=str, dest='date_time',
                         action='store', default=None, help='date_time, manually set date time, for model data save path configuration.')
 
@@ -139,15 +143,14 @@ def main():
     )
 
     # Config paths
-    prefix = os.path.join(
-        "~", "Documents", "DeepLearningData", "AirMonitor")
+    log_prefix = args.log_prefix
     date_time = datetime.now().strftime("%Y%m%d-%H%M%S")
     subfix = os.path.join(args.model_type, data_name,
                           "_".join(["stride", str(stride)]), date_time)  # date_time at last
 
     # ckpts 和 logs 分开
-    log_dir = os.path.expanduser(os.path.join(prefix, "logs", subfix, ))
-    ckpt_dir = os.path.expanduser(os.path.join(prefix, "ckpts", subfix))
+    log_dir = os.path.join(log_prefix, "logs", subfix, )
+    ckpt_dir = os.path.join(log_prefix, "ckpts", subfix)
     makedir_exist_ok(log_dir)
     makedir_exist_ok(ckpt_dir)
 
