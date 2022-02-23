@@ -124,7 +124,7 @@ def main():
     batch_size = args.batch_size
     validation_split = args.validation_split
 
-    gpus_memory = get_gpu_memory()
+    # gpus_memory = get_gpu_memory()
     # available_gpu_indices = get_available_gpu_indices(
     # gpus_memory, required_memory=5000)  # 5000 MB
     # model_gpu = available_gpu_indices[0]
@@ -146,10 +146,10 @@ def main():
     log_prefix = args.log_prefix
     date_time = datetime.now().strftime("%Y%m%d-%H%M%S")
     subfix = os.path.join(args.model_type, data_name,
-                          "_".join(["stride", str(stride)]), date_time)  # date_time at last
+                          "_".join(["stride", str(stride)]), args.attention_type, date_time)  # date_time at last
 
     # ckpts 和 logs 分开
-    log_dir = os.path.join(log_prefix, "logs", subfix, )
+    log_dir = os.path.join(log_prefix, "logs", subfix)
     ckpt_dir = os.path.join(log_prefix, "ckpts", subfix)
     makedir_exist_ok(log_dir)
     makedir_exist_ok(ckpt_dir)
