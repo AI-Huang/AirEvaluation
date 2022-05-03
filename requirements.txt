@@ -1,2 +1,4 @@
 tensorflow>=2.1.0
 pandas>=1.1.0
+cudatoolkit==10.1
+cudnn==7.6.5

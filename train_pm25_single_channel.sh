@@ -1,5 +1,5 @@
 #!/bin/bash
-# 2022-2-12 18:05:16
+# 2022-2-12 18:05:16 Hong Kong
 
 hparam_sensor_index="0 1 2 3"
 hparam_stride="10 5 2"
