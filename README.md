@@ -14,6 +14,12 @@ where `sensor_index=0` means the No. 0 sensor's data is chosen;
 
 `stride=10` means the stride for the sliding window is 10.
 
+#### Log results prefix
+
+Default log_prefix: `~/Documents/DeepLearningData/AirEvaluation`.
+
+Use `--log_prefix=.` option to set the results directory here.
+
 ### Evaluation
 
 Run:

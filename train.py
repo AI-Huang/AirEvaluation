@@ -100,7 +100,7 @@ def training_args():
     # Log parameter
     parser.add_argument('--log_prefix', type=str, dest='log_prefix',
                         action='store', default=os.path.expanduser(os.path.join(
-                            "~", "Documents", "DeepLearningData", "AirMonitor")), help='log_prefix, .')
+                            "~", "Documents", "DeepLearningData", "AirEvaluation")), help='log_prefix, .')
     parser.add_argument('--date_time', type=str, dest='date_time',
                         action='store', default=None, help='date_time, manually set date time, for model data save path configuration.')
 
