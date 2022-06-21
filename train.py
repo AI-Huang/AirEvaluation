@@ -57,6 +57,9 @@ def training_args():
                         action='store', default="False", help=""".""")
     parser.add_argument('--attention_type', type=str, dest='attention_type',
                         action='store', default="official", choices=["official", "MyAttention", "BahdanauAttention"], help="""attention_type, "custom" or "official".""")
+    # ablation study
+    parser.add_argument('--model_without', type=str, dest='model_without',
+                        action='store', default="", choices=["", "LSTM", "Attention"], help="""Config the model w/o some a layer.""")
 
     # Data parameters
     parser.add_argument('--data_type', type=str, dest='data_type',
@@ -100,16 +103,20 @@ def training_args():
     # Log parameter
     parser.add_argument('--log_prefix', type=str, dest='log_prefix',
                         action='store', default=os.path.expanduser(os.path.join(
-                            "~", "Documents", "DeepLearningData", "AirMonitor")), help='log_prefix, .')
+                            "~", "Documents", "DeepLearningData", "AirEvaluation")), help='log_prefix, .')
     parser.add_argument('--date_time', type=str, dest='date_time',
                         action='store', default=None, help='date_time, manually set date time, for model data save path configuration.')
 
     args = parser.parse_args()
 
+    args.model_name = args.model_type + "_wo_" + \
+        args.model_without  # e.g., WaveNet_LSTM_wo_LSTM, WaveNet_LSTM_wo_Attention
+
     # if data_name is not set
     if not args.data_name:
         args.data_name = "_".join([args.data_type, str(args.sensor_index)])
     pm25_data_list = ["pm25_0", "pm25_1", "pm25_2", "pm25_3", "pm25_all"]
+
     if not args.data_name in pm25_data_list:
         raise ValueError(f"{args.data_name} NOT in pm25_data_list!")
 
@@ -145,12 +152,12 @@ def main():
     # Config paths
     log_prefix = args.log_prefix
     date_time = datetime.now().strftime("%Y%m%d-%H%M%S")
-    subfix = os.path.join(args.model_type, data_name,
+    subfix = os.path.join(args.model_name, data_name,
                           "_".join(["stride", str(stride)]), args.attention_type, date_time)  # date_time at last
 
     # ckpts 和 logs 分开
-    log_dir = os.path.join(log_prefix, "logs", subfix)
-    ckpt_dir = os.path.join(log_prefix, "ckpts", subfix)
+    log_dir = os.path.expanduser(os.path.join(log_prefix, "logs", subfix))
+    ckpt_dir = os.path.expanduser(os.path.join(log_prefix, "ckpts", subfix))
     makedir_exist_ok(log_dir)
     makedir_exist_ok(ckpt_dir)
 
@@ -184,7 +191,11 @@ def main():
     with tf.device(model_device):
         if args.model_type == "WaveNet_LSTM":
             model = WaveNet_LSTM(input_shape=(
-                args.window_size, 1), activation=args.activation, batch_norm=args.batch_norm, attention_type=args.attention_type)
+                args.window_size, 1),
+                activation=args.activation,
+                batch_norm=args.batch_norm,
+                attention_type=args.attention_type,
+                without=args.model_without)
 
         model.compile(
             Adam(clipvalue=1.0, lr=lr_schedule(0)),

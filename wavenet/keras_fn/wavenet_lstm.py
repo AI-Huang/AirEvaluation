@@ -55,7 +55,7 @@ def wave_block(x, filters, kernel_size, n, batch_norm=False):
     return x  # Not residual_x!
 
 
-def WaveNet_LSTM(input_shape, activation=None, batch_norm=False, attention_type="official"):
+def WaveNet_LSTM(input_shape, activation=None, batch_norm=False, attention_type="official", without=None):
     """WaveNet_LSTM
     Inputs
         input_shape: the input must be a vector, so *input_shape* must be (dim, 1).
@@ -101,7 +101,10 @@ def WaveNet_LSTM(input_shape, activation=None, batch_norm=False, attention_type=
         x = BatchNormalization(beta_regularizer=l2(
             1e-4), gamma_regularizer=l2(1e-4))(x)
 
-    x = Bidirectional(LSTM(64, return_sequences=True))(x)
+    if without == "LSTM":
+        print("Ablation, no LSTM")
+    else:
+        x = Bidirectional(LSTM(64, return_sequences=True))(x)
 
     valid_attention = ["official", "MyAttention", "BahdanauAttention"]
     assert attention_type in valid_attention
@@ -129,7 +132,8 @@ def main():
     model = WaveNet_LSTM(input_shape=(7200, 1),
                          activation=None,
                          batch_norm=None,
-                         attention_type=test_attention_type)
+                         attention_type=test_attention_type,
+                         without="LSTM")
 
     model.summary()
 
