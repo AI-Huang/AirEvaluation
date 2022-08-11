@@ -1,7 +1,7 @@
 #!/bin/bash
 # 2022-2-12 18:20:28
 
-output_dir="~/Documents/Exper-no-attention"
+output_dir="~/Documents/Exper-no-lstm"
 
 hparam_sensor_index="0 1 2 3"
 hparam_stride="10 5" # 2
