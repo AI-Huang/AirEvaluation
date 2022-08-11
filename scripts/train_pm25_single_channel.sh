@@ -7,6 +7,6 @@ attention_type="official" # "MyAttention"
 for sensor_index in $hparam_sensor_index; do
     for stride in $hparam_stride; do
         echo "sensor_index: $sensor_index; stride: $stride; attention_type: $attention_type."
-        python train.py --data_type=pm25 --sensor_index=$sensor_index --shuffle=True --stride=$stride --attention_type=$attention_type --log_prefix="."
+        python train.py --data_type=pm25 --sensor_index=$sensor_index --shuffle=True --stride=$stride --attention_type=$attention_type --output_dir="."
     done
 done

@@ -55,7 +55,7 @@ def wave_block(x, filters, kernel_size, n, batch_norm=False):
     return x  # Not residual_x!
 
 
-def WaveNet_LSTM(input_shape, activation=None, batch_norm=False, attention_type="official", without=None):
+def WaveNet_LSTM(input_shape, activation=None, batch_norm=False, attention_type="official", **kwargs):
     """WaveNet_LSTM
     Inputs
         input_shape: the input must be a vector, so *input_shape* must be (dim, 1).
@@ -101,19 +101,22 @@ def WaveNet_LSTM(input_shape, activation=None, batch_norm=False, attention_type=
         x = BatchNormalization(beta_regularizer=l2(
             1e-4), gamma_regularizer=l2(1e-4))(x)
 
-    if without == "LSTM":
+    if "no_lstm" in kwargs and kwargs["no_lstm"] == True:
         print("Ablation, no LSTM")
     else:
         x = Bidirectional(LSTM(64, return_sequences=True))(x)
 
-    valid_attention = ["official", "MyAttention", "BahdanauAttention"]
-    assert attention_type in valid_attention
-    if attention_type == "official":
-        x = Attention()([x, x])
-    elif attention_type == "MyAttention":
-        x = MyAttention(input_shape[0]//1000)(x)
-    elif attention_type == "BahdanauAttention":
-        x = BahdanauAttention(input_shape[0]//1000)(x)
+    if "no_attention" in kwargs and kwargs["no_attention"] == True:
+        print("Ablation, no Attention")
+    else:
+        valid_attention = ["official", "MyAttention", "BahdanauAttention"]
+        assert attention_type in valid_attention
+        if attention_type == "official":
+            x = Attention()([x, x])
+        elif attention_type == "MyAttention":
+            x = MyAttention(input_shape[0]//1000)(x)
+        elif attention_type == "BahdanauAttention":
+            x = BahdanauAttention(input_shape[0]//1000)(x)
 
     x = Dropout(0.2)(x)
     x = Dense(128, activation="relu")(x)

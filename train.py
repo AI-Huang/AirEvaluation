@@ -15,7 +15,10 @@ Environments:
 """
 import os
 import argparse
+import json
 from datetime import datetime
+import random
+import numpy as np
 import tensorflow as tf
 # from wavenet.keras_fn.wavenet import
 from wavenet.keras_fn.wavenet_lstm import WaveNet_LSTM
@@ -48,7 +51,7 @@ def training_args():
             return True
 
     # Model parameters
-    parser.add_argument('--model_type', type=str, dest='model_type',
+    parser.add_argument('--model_name', type=str, dest='model_name',
                         action='store', default="WaveNet_LSTM", choices=["WaveNet_LSTM"], help='tmp, manually set model type, for model data save path configuration.')
     # Model parameters and ablition study
     parser.add_argument('--activation', type=str, dest='activation',
@@ -57,9 +60,11 @@ def training_args():
                         action='store', default="False", help=""".""")
     parser.add_argument('--attention_type', type=str, dest='attention_type',
                         action='store', default="official", choices=["official", "MyAttention", "BahdanauAttention"], help="""attention_type, "custom" or "official".""")
-    # ablation study
-    parser.add_argument('--model_without', type=str, dest='model_without',
-                        action='store', default="", choices=["", "LSTM", "Attention"], help="""Config the model w/o some a layer.""")
+    # Ablation study
+    parser.add_argument('--no-attention', action='store_true', default=False,
+                        help='remove attention for ablation study')
+    parser.add_argument('--no-lstm', action='store_true', default=False,
+                        help='remove lstm layer for ablation study')
 
     # Data parameters
     parser.add_argument('--data_type', type=str, dest='data_type',
@@ -77,8 +82,8 @@ def training_args():
                         action='store', default=10, help='stride, e.g., --stride=10, stride of the origin data to yield samples.')
     parser.add_argument('--shuffle', type=string2bool, dest='shuffle',
                         action='store', default=True, help='shuffle, if True, data generator will shuffle after every epoch.')
-    parser.add_argument('--seed', type=int, dest='seed',
-                        action='store', default=42, help="seed, the initial seed used in WindowSequence's _set_index_array() method.")
+    parser.add_argument('--seed', type=int, default=np.random.randint(10000), metavar='S',
+                        help="""random seed (default: numpy.random.randint(10000) ), used in WindowSequence's _set_index_array() method""")
     parser.add_argument('--validation_split', type=float,
                         dest='validation_split', action='store', default=0.2,
                         help='validation_split, the split of the validation data.')
@@ -101,16 +106,19 @@ def training_args():
 
     # Other parameters
     # Log parameter
-    parser.add_argument('--log_prefix', type=str, dest='log_prefix',
+    parser.add_argument('--output_dir', type=str, dest='output_dir',
                         action='store', default=os.path.expanduser(os.path.join(
-                            "~", "Documents", "DeepLearningData", "AirEvaluation")), help='log_prefix, .')
+                            "~", "Documents", "DeepLearningData", "AirEvaluation")), help='output_dir, .')
     parser.add_argument('--date_time', type=str, dest='date_time',
                         action='store', default=None, help='date_time, manually set date time, for model data save path configuration.')
 
     args = parser.parse_args()
 
-    args.model_name = args.model_type + "_wo_" + \
-        args.model_without  # e.g., WaveNet_LSTM_wo_LSTM, WaveNet_LSTM_wo_Attention
+    # e.g., WaveNet_LSTM_no_LSTM, WaveNet_LSTM_no_attention
+    if args.no_attention:
+        args.model_name = '_'.join([args.model_name, "no_attention"])
+    if args.no_lstm:
+        args.model_name = '_'.join([args.model_name, "no_lstm"])
 
     # if data_name is not set
     if not args.data_name:
@@ -120,11 +128,21 @@ def training_args():
     if not args.data_name in pm25_data_list:
         raise ValueError(f"{args.data_name} NOT in pm25_data_list!")
 
+    args.date_time = datetime.now().strftime("%Y%m%d-%H%M%S")
+
     return args
 
 
 def main():
     args = training_args()
+
+    # seed
+    # tf.keras.utils.set_random_seed(args.seed), requires tensorflow>=2.7
+    # equivalent to
+    random.seed(args.seed)
+    np.random.seed(args.seed)
+    tf.random.set_seed(args.seed)
+
     data_name = args.data_name
     window_size = args.window_size
     stride = args.stride
@@ -150,21 +168,23 @@ def main():
     )
 
     # Config paths
-    log_prefix = args.log_prefix
-    date_time = datetime.now().strftime("%Y%m%d-%H%M%S")
+    output_dir = args.output_dir
     subfix = os.path.join(args.model_name, data_name,
-                          "_".join(["stride", str(stride)]), args.attention_type, date_time)  # date_time at last
+                          "_".join(["stride", str(stride)]), args.attention_type, args.date_time)  # date_time at last
 
     # ckpts 和 logs 分开
-    log_dir = os.path.expanduser(os.path.join(log_prefix, "logs", subfix))
-    ckpt_dir = os.path.expanduser(os.path.join(log_prefix, "ckpts", subfix))
+    log_dir = os.path.expanduser(os.path.join(output_dir, "logs", subfix))
+    ckpt_dir = os.path.expanduser(os.path.join(output_dir, "ckpts", subfix))
     makedir_exist_ok(log_dir)
     makedir_exist_ok(ckpt_dir)
+    # Record configurations
+    with open(os.path.join(log_dir, 'config.json'), 'w', encoding='utf8') as json_file:
+        json_file.write(json.dumps(vars(args)))
 
     # Define callbacks
     from tensorflow.keras.callbacks import LearningRateScheduler, ModelCheckpoint, CSVLogger, TensorBoard
 
-    ckpt_filename = "%s-epoch-{epoch:03d}-mse-{mse:.4f}.h5" % args.model_type
+    ckpt_filename = "%s-epoch-{epoch:03d}-mse-{mse:.4f}.h5" % args.model_name
     ckpt_path = os.path.join(ckpt_dir, ckpt_filename)
     checkpoint_callback = ModelCheckpoint(
         filepath=ckpt_path, monitor="mse", verbose=1)
@@ -189,13 +209,17 @@ def main():
     # Prepare model
     from tensorflow.keras.optimizers import Adam, SGD
     with tf.device(model_device):
-        if args.model_type == "WaveNet_LSTM":
+        kwargs = {
+            "no_attention": args.no_attention,
+            "no_lstm": args.no_lstm
+        }
+        if args.model_name.startswith("WaveNet_LSTM"):
             model = WaveNet_LSTM(input_shape=(
                 args.window_size, 1),
                 activation=args.activation,
                 batch_norm=args.batch_norm,
                 attention_type=args.attention_type,
-                without=args.model_without)
+                **kwargs)
 
         model.compile(
             Adam(clipvalue=1.0, lr=lr_schedule(0)),

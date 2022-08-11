@@ -1,15 +1,11 @@
 # data
 data/
-# ckpts and logs
-ckpts/
-logs/
 # filter functions
 filter_fn/
 # report and results
+output/
 report/
 results/
-
-.vscode/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
