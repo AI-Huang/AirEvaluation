@@ -169,7 +169,7 @@ def main():
 
     # Config paths
     output_dir = args.output_dir
-    subfix = os.path.join(args.model_name, data_name,
+    subfix = os.path.join(args.model_name, "_".join([data_name, str(window_size)]),
                           "_".join(["stride", str(stride)]), args.attention_type, args.date_time)  # date_time at last
 
     # ckpts 和 logs 分开
